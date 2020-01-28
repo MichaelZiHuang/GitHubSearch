@@ -6,9 +6,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+
+import com.example.android.githubsearch.utils.GitHubUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -54,6 +57,8 @@ public class MainActivity extends AppCompatActivity {
                 String searchQuery = mSearchBoxET.getText().toString();
                 if (!TextUtils.isEmpty(searchQuery)) {
                     mGitHubSearchAdapter.updateSearchResults(new ArrayList<String>(Arrays.asList(dummySearchResults)));
+                    String url = GitHubUtils.buildGithubSearchURL(searchQuery);
+                    Log.d(TAG, "query url" + url);
                     mSearchBoxET.setText("");
                 }
             }

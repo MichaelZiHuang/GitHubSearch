@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -12,7 +13,9 @@ import android.widget.Button;
 import android.widget.EditText;
 
 import com.example.android.githubsearch.utils.GitHubUtils;
+import com.example.android.githubsearch.utils.NetworkUtils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -56,12 +59,42 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 String searchQuery = mSearchBoxET.getText().toString();
                 if (!TextUtils.isEmpty(searchQuery)) {
-                    mGitHubSearchAdapter.updateSearchResults(new ArrayList<String>(Arrays.asList(dummySearchResults)));
-                    String url = GitHubUtils.buildGitHubSearchURL(searchQuery);
-                    Log.d(TAG, "querying url: " + url);
-                    mSearchBoxET.setText("");
+                    doGitHubSearch(searchQuery);
+//                    mGitHubSearchAdapter.updateSearchResults(new ArrayList<String>(Arrays.asList(dummySearchResults)));
                 }
             }
         });
+    }
+
+    private void doGitHubSearch(String searchQuery) {
+        String url = GitHubUtils.buildGitHubSearchURL(searchQuery);
+        Log.d(TAG, "querying url: " + url);
+        new GitHubSearchTask().execute(url);
+    }
+
+    public class GitHubSearchTask extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected String doInBackground(String... strings) {
+            String url = strings[0];
+            String searchResults = null;
+            try {
+                searchResults = NetworkUtils.doHttpGet(url);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return searchResults;
+        }
+
+        @Override
+        protected void onPostExecute(String s) {
+            super.onPostExecute(s);
+            if (s != null) {
+                ArrayList<String> searchResultsList = new ArrayList<>();
+                searchResultsList.add(s);
+                mGitHubSearchAdapter.updateSearchResults(searchResultsList);
+                mSearchBoxET.setText("");
+            }
+        }
     }
 }

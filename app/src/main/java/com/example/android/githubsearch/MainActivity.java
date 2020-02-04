@@ -11,7 +11,10 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
+import com.example.android.githubsearch.data.GitHubRepo;
 import com.example.android.githubsearch.utils.GitHubUtils;
 import com.example.android.githubsearch.utils.NetworkUtils;
 
@@ -24,20 +27,9 @@ public class MainActivity extends AppCompatActivity {
 
     private RecyclerView mSearchResultsRV;
     private EditText mSearchBoxET;
+    private ProgressBar mLoadingIndicatorPB;
+    private TextView mErrorMessageTV;
     private GitHubSearchAdapter mGitHubSearchAdapter;
-
-    private String[] dummySearchResults = {
-            "Dummy search results",
-            "Dummy search results",
-            "Dummy search results",
-            "Dummy search results",
-            "Dummy search results",
-            "Dummy search results",
-            "Dummy search results",
-            "Dummy search results",
-            "Dummy search results",
-            "Dummy search results"
-    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,6 +44,9 @@ public class MainActivity extends AppCompatActivity {
 
         mGitHubSearchAdapter = new GitHubSearchAdapter();
         mSearchResultsRV.setAdapter(mGitHubSearchAdapter);
+
+        mLoadingIndicatorPB = findViewById(R.id.pb_loading_indicator);
+        mErrorMessageTV = findViewById(R.id.tv_error_message);
 
         Button searchButton = findViewById(R.id.btn_search);
         searchButton.setOnClickListener(new View.OnClickListener() {
@@ -75,6 +70,12 @@ public class MainActivity extends AppCompatActivity {
     public class GitHubSearchTask extends AsyncTask<String, Void, String> {
 
         @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            mLoadingIndicatorPB.setVisibility(View.VISIBLE);
+        }
+
+        @Override
         protected String doInBackground(String... strings) {
             String url = strings[0];
             String searchResults = null;
@@ -89,11 +90,18 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onPostExecute(String s) {
             super.onPostExecute(s);
+            mLoadingIndicatorPB.setVisibility(View.INVISIBLE);
             if (s != null) {
-                ArrayList<String> searchResultsList = new ArrayList<>();
-                searchResultsList.add(s);
+                mErrorMessageTV.setVisibility(View.INVISIBLE);
+                mSearchResultsRV.setVisibility(View.VISIBLE);
+//                ArrayList<String> searchResultsList = new ArrayList<>();
+//                searchResultsList.add(s);
+                ArrayList<GitHubRepo> searchResultsList = GitHubUtils.parseGitHubSearchResults(s);
                 mGitHubSearchAdapter.updateSearchResults(searchResultsList);
-                mSearchBoxET.setText("");
+//                mSearchBoxET.setText("");
+            } else {
+                mErrorMessageTV.setVisibility(View.VISIBLE);
+                mSearchResultsRV.setVisibility(View.INVISIBLE);
             }
         }
     }
